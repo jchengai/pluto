@@ -11,8 +11,8 @@ This is the official repository of
 <a href="https://jchengai.github.io/pluto">
 <img src="https://img.shields.io/badge/Project-Page-blue?style=flat">
 </a>
-<a href='https://arxiv.org/pdf/todo' style='padding-left: 0.5rem;'>
-    <img src='https://img.shields.io/badge/arXiv-todo-red?style=flat&logo=arXiv&logoColor=wihte' alt='arXiv PDF'>
+<a href='https://arxiv.org/abs/2404.14327' style='padding-left: 0.5rem;'>
+    <img src='https://img.shields.io/badge/arXiv-PDF-red?style=flat&logo=arXiv&logoColor=wihte' alt='arXiv PDF'>
 </a>
 </p>
 
@@ -25,5 +25,5 @@ The code is under cleaning and will be released gradually.
 - [ ] visualization
 - [ ] pluto-planner & checkpoint
 - [ ] feature builder & model
-- [ ] initial repo & paper
+- [x] initial repo & paper
 
