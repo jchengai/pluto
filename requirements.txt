@@ -1,0 +1,7 @@
+timm
+pytorch-lightning==2.0.1
+torchmetrics==0.10.2
+tensorboard
+wandb==0.14.2
+numba
+rich==13.3.4
