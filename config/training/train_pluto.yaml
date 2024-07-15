@@ -1,0 +1,13 @@
+# @package _global_
+job_name: pluto
+py_func: train
+objective_aggregate_mode: mean
+
+defaults:
+        - override /data_augmentation:
+                  - contrastive_scenario_generator
+        - override /splitter: nuplan
+        - override /model: pluto_model
+        - override /scenario_filter: training_scenarios_tiny
+        - override /custom_trainer: pluto_trainer
+        - override /lightning: custom_lightning

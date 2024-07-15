@@ -1,3 +1,4 @@
+import math
 import os
 import pprint
 from pathlib import Path
@@ -5,6 +6,7 @@ import numpy
 import numpy as np
 import pandas as pd
 import torch
+import cv2
 
 
 def to_tensor(data):
@@ -93,3 +95,33 @@ def safe_index(ls, value):
         return ls.index(value)
     except ValueError:
         return None
+
+
+def shift_and_rotate_img(img, shift, angle, resolution, cval=-200):
+    """
+    img: (H, W, C)
+    shift: (H_shift, W_shift, 0)
+    resolution: float
+    angle: float
+    """
+    rows, cols = img.shape[:2]
+    shift = shift / resolution
+    translation_matrix = np.float32([[1, 0, shift[1]], [0, 1, shift[0]]])
+    translated_img = cv2.warpAffine(
+        img, translation_matrix, (cols, rows), borderValue=cval
+    )
+    M = cv2.getRotationMatrix2D((cols / 2, rows / 2), math.degrees(angle), 1)
+    rotated_img = cv2.warpAffine(translated_img, M, (cols, rows), borderValue=cval)
+    if len(img.shape) == 3 and len(rotated_img.shape) == 2:
+        rotated_img = rotated_img[..., np.newaxis]
+    return rotated_img.astype(np.float32)
+
+
+def crop_img_from_center(img, crop_size):
+    h, w = img.shape[:2]
+    h_crop, w_crop = crop_size
+    h_start = (h - h_crop) // 2
+    w_start = (w - w_crop) // 2
+    return img[h_start : h_start + h_crop, w_start : w_start + w_crop].astype(
+        np.float32
+    )

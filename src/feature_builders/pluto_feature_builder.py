@@ -358,23 +358,6 @@ class PlutoFeatureBuilder(AbstractFeatureBuilder):
             "free_path_points": free_path_points,
         }
 
-    def _get_route_features(
-        self, ego_state: EgoState, route_reference_path: np.ndarray
-    ):
-        ego_position = ego_state.rear_axle.array
-        distance = np.linalg.norm(route_reference_path[:, :2] - ego_position, axis=1)
-        closest_idx = min(np.argmin(distance), len(route_reference_path) - 2)
-        clipped_route = route_reference_path[
-            closest_idx : closest_idx + int(self.radius / 0.25)
-        ]
-
-        route = common.interpolate_polyline(clipped_route, 101)
-        position = route[:-1, :2]
-        vector = route[1:, :2] - route[:-1, :2]
-        orientation = np.arctan2(vector[:, 1], vector[:, 0])
-
-        return {"position": position, "vector": vector, "orientation": orientation}
-
     def _get_ego_current_state(self, ego_state: EgoState, prev_state: EgoState):
         state = np.zeros(7, dtype=np.float64)
         state[0:2] = ego_state.rear_axle.array
@@ -388,7 +371,7 @@ class PlutoFeatureBuilder(AbstractFeatureBuilder):
                 ego_state.dynamic_car_state.angular_velocity,
             )
         else:
-            steering_angle, yaw_rate = common.calculate_additional_ego_states(
+            steering_angle, yaw_rate = self.calculate_additional_ego_states(
                 ego_state, prev_state
             )
 
@@ -820,3 +803,22 @@ class PlutoFeatureBuilder(AbstractFeatureBuilder):
 
     def _get_ego_head_position(self, xy, angle):
         return xy + self.length * np.array([np.cos(angle), np.sin(angle)]) / 2
+
+    def calculate_additional_ego_states(
+        self, current_state: EgoState, prev_state: EgoState, dt=0.1
+    ):
+        cur_velocity = current_state.dynamic_car_state.rear_axle_velocity_2d.x
+        angle_diff = current_state.rear_axle.heading - prev_state.rear_axle.heading
+        angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi
+        yaw_rate = angle_diff / dt
+
+        if abs(cur_velocity) < 0.2:
+            return 0.0, 0.0  # if the car is almost stopped, the yaw rate is unreliable
+        else:
+            steering_angle = np.arctan(
+                yaw_rate * self.ego_params.wheel_base / abs(cur_velocity)
+            )
+            steering_angle = np.clip(steering_angle, -2 / 3 * np.pi, 2 / 3 * np.pi)
+            yaw_rate = np.clip(yaw_rate, -0.95, 0.95)
+
+            return steering_angle, yaw_rate

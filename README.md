@@ -39,6 +39,65 @@ git clone https://github.com/jchengai/pluto.git && cd pluto
 sh ./script/setup_env.sh
 ```
 
+## Feature Cache
+
+Preprocess the dataset to accelerate training. It is recommended to run a small sanity check to make sure everything is correctly setup.
+
+```
+ python run_training.py \
+    py_func=cache +training=train_pluto \
+    scenario_builder=nuplan_mini \
+    cache.cache_path=/nuplan/exp/sanity_check \
+    cache.cleanup_cache=true \
+    scenario_filter=training_scenarios_tiny \
+    worker=sequential
+```
+
+Then preprocess the whole nuPlan training set (this will take some time). You may need to change `cache.cache_path` to suit your condition
+
+```
+ export PYTHONPATH=$PYTHONPATH:$(pwd)
+
+ python run_training.py \
+    py_func=cache +training=train_pluto \
+    scenario_builder=nuplan \
+    cache.cache_path=/nuplan/exp/cache_pluto_1M \
+    cache.cleanup_cache=true \
+    scenario_filter=training_scenarios_1M \
+    worker.threads_per_node=40
+```
+
+## Training
+
+(The training part it not fully tested)
+
+Same, it is recommended to run a sanity check first:
+
+```
+CUDA_VISIBLE_DEVICES=0 python run_training.py \
+  py_func=train +training=train_pluto \
+  worker=single_machine_thread_pool worker.max_workers=4 \
+  scenario_builder=nuplan cache.cache_path=/nuplan/exp/sanity_check cache.use_cache_without_dataset=true \
+  data_loader.params.batch_size=4 data_loader.params.num_workers=1
+```
+
+Training on the full dataset (without CIL):
+
+```
+CUDA_VISIBLE_DEVICES=0,1,2,3 python run_training.py \
+  py_func=train +training=train_pluto \
+  worker=single_machine_thread_pool worker.max_workers=32 \
+  scenario_builder=nuplan cache.cache_path=/nuplan/exp/cache_pluto_1M cache.use_cache_without_dataset=true \
+  data_loader.params.batch_size=32 data_loader.params.num_workers=16 \
+  lr=1e-3 epochs=25 warmup_epochs=3 weight_decay=0.0001 \
+  wandb.mode=online wandb.project=nuplan wandb.name=pluto
+```
+
+- add option `model.use_hidden_proj=true +custom_trainer.use_contrast_loss=true` to enable CIL.
+
+- you can remove wandb related configurations if your prefer tensorboard.
+
+
 ## Checkpoint
 
 Download and place the checkpoint in the `pluto/checkpoints` folder.
@@ -62,7 +121,8 @@ The rendered simulation video will be saved to the specified directory (need cha
 
 The code is under cleaning and will be released gradually.
 
-- [ ] training code
+- [ ] improve docs
+- [x] training code
 - [x] visualization
 - [x] pluto-planner & checkpoint
 - [x] feature builder & model

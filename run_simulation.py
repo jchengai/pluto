@@ -32,10 +32,14 @@ set_default_path()
 CONFIG_PATH = os.getenv("NUPLAN_HYDRA_CONFIG_PATH", "config/simulation")
 
 
-def print_simulation_results():
-    root = Path(os.getcwd()) / "aggregator_metric"
-    result = list(root.glob("*.parquet"))[0]
-    df = pd.read_parquet(result)
+def print_simulation_results(file=None):
+    if file is not None:
+        df = pd.read_parquet(file)
+    else:
+        root = Path(os.getcwd()) / "aggregator_metric"
+        result = list(root.glob("*.parquet"))
+        result = max(result, key=lambda item: item.stat().st_ctime)
+        df = pd.read_parquet(result)
     final_score = df[df["scenario"] == "final_score"]
     final_score = final_score.to_dict(orient="records")[0]
     pprint.PrettyPrinter(indent=4).pprint(final_score)

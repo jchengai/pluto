@@ -1,0 +1,29 @@
+_target_: src.models.pluto.pluto_model.PlanningModel
+_convert_: "all"
+
+dim: 128
+state_channel: 6
+polygon_channel: 6
+history_channel: 9
+history_steps: 21
+future_steps: 80
+encoder_depth: 4
+decoder_depth: 4
+drop_path: 0.2
+dropout: 0.1
+num_heads: 4
+num_modes: 12
+state_dropout: 0.75
+use_ego_history: false
+state_attn_encoder: true
+use_hidden_proj: false
+
+feature_builder:
+  _target_: src.feature_builders.pluto_feature_builder.PlutoFeatureBuilder
+  _convert_: "all"
+  radius: 120
+  history_horizon: 2
+  future_horizon: 8
+  sample_interval: 0.1
+  max_agents: 48
+  build_reference_line: true
